@@ -49,7 +49,7 @@
             <div class="img-wrap">
               <router-link :to="'/productDetail/'+product.pid">
 
-                <img :src="require('../assets/'+product.showpic)" alt="">
+                <img v-lazy="require('../assets/'+product.showpic)" alt="">
               </router-link>
 
             </div>
@@ -99,6 +99,7 @@
       </div>
     </div>
     <div class="cover" v-show="showBuyPop"></div>
+
   </div>
 </template>
 <script>
@@ -154,16 +155,22 @@
               console.log(response.data.msg)
               this.$parent.loadCartCount()
             })
+          this.closeBuyPop()
         }
       },
       created(){
         this.loadProduct()
       },
       mounted(){
-          //设置轮播模块的高度
-          setTimeout(()=>{
-            this.height=$('.slide-1 img').height()
-          },50)
+          //设置轮播模块的高
+            setTimeout(()=>{
+              this.height=$('.slide-1 img').height()
+            },100)
+
+            $(window).resize(()=>{
+                this.height=$('.slide-1 img').height()
+            })
+
           //设置轮播功能
           var num=1
           this.bannerSlide(num)
@@ -182,7 +189,6 @@
       watch:{
           height:function(){
               $(".banner-img").height(this.height)
-              console.log(5)
           }
       },
       destroyed(){

@@ -4,7 +4,7 @@ const http = require("http")
 const express = require("express")
 const bodyParser = require("body-parser")
 const cookieParser = require("cookie-parser")
-const expressSession = require("express-session")
+const session = require("express-session")
 const cors = require("cors")
 // 2：引用连接池
 const pool = require("./pool")
@@ -16,14 +16,31 @@ server.listen(3003)
 //     4.1 配置跨域模块
 // origin 允许来自哪个域名下跨域访问
 app.use(cors({
-    origin:["http://127.0.0.1","http://localhost:8080"],
+    origin:["http://127.0.0.1","http://localhost:8080","http://127.0.0.1:8080"],
     credentials:true
 }))
 //     4.2 post req.body.uname
 app.use(bodyParser.urlencoded({extended:false}))
 //     4.3 cookie/session
-app.use(cookieParser())
-
+app.use(cookieParser('love'))
+app.use(session({
+    resave: true, // don't save session if unmodified
+    saveUninitialized: true,
+    secret: 'love'
+}));
+// app.use(function(req,res,next){
+//     if (!req.session.user) {
+//         if(req.url=="/login"){
+//             next();//如果请求的地址是登录则通过，进行下一个请求
+//         }
+//         else
+//         {
+//             res.redirect('/login');
+//         }
+//     } else if (req.session.user) {
+//         next();
+//     }
+// });
 //获取产品展示信息
 app.get("/product_list_index",(req,res)=>{
     //获取连接
@@ -188,19 +205,29 @@ app.get("/deleteitem",(req,res)=>{
 //购物车选中和取消选中
 app.get("/is_checked",(req,res)=>{
     var pid=req.query.pid
-    var ischecked=req.query.ischecked
     var reg = /^[0-9]{1,}$/;
     if(!reg.test(pid)){
         res.json({code:-1,msg:"参数有误"});
         return;
     }
-    if(!reg.test(ischecked)){
-        res.json({code:-1,msg:"参数有误"});
-        return;
-    }
     pool.getConnection((err,conn)=>{
-        var sql="UPDATE  lc_cart SET ischecked=? WHERE pid=?"
-        conn.query(sql,[pid,ischecked],(err)=>{
+        var sql="UPDATE  lc_cart SET ischecked=!ischecked WHERE pid=?"
+        conn.query(sql,[pid],(err)=>{
+            if(err) throw err
+            res.json({code:1,msg:"修改成功"})
+        })
+        conn.release()
+    })
+})
+//购物车底部功能
+
+//1.获得页面传来的参数，根据参数修改数据库中ischecked的值
+//2.查询数据库中ischecked为true的价格总值和数据条数。
+app.get("/checked_all",(req,res)=>{
+    var checkedAll=req.query.checkedAll
+    pool.getConnection((err,conn)=>{
+        var sql="UPDATE  lc_cart SET ischecked=?"
+        conn.query(sql,[checkedAll],(err)=>{
             if(err) throw err
             res.json({code:1,msg:"修改成功"})
         })
@@ -208,3 +235,78 @@ app.get("/is_checked",(req,res)=>{
     })
 
 })
+app.get("/checked_msg",(req,res)=>{
+    pool.getConnection((err,conn)=>{
+        var sql="SELECT SUM(pcount) c,SUM(price*pcount) s FROM lc_cart WHERE ischecked=1"
+        conn.query(sql,(err,result)=>{
+            if(err) throw err
+            res.json(result)
+        })
+        conn.release()
+    })
+})
+// 注册功能
+app.post("/register",(req,res)=>{
+    var uname=req.body.uname
+    var upwd=req.body.upwd
+    var reguname=/^\w{1,10}$/
+    if(!reguname.test(uname)){
+        return
+    }
+    var regupwd=/^\d{6}$/
+    if(!regupwd.test(upwd)){
+        return
+    }
+    pool.getConnection((err,conn)=>{
+        var sql="INSERT INTO lc_user(uname,upwd) VALUES(?,?)"
+        conn.query(sql,[uname,upwd],(err)=>{
+            if(err) throw err
+            res.json({code:1,msg:'注册成功'})
+        })
+        conn.release()
+    })
+})
+app.get("/valiuname",(req,res)=>{
+    var uname=req.query.uname
+    var reguname=/^\w{1,10}$/
+    if(!reguname.test(uname)){
+        return
+    }
+    pool.getConnection((err,conn)=>{
+        var sql="SELECT * FROM lc_user WHERE uname=?"
+        conn.query(sql,[uname],(err,result)=>{
+            if(err) throw err
+            res.json(result[0])
+            conn.release()
+        })
+    })
+})
+//登录功能
+let user={'ok':0}
+app.get("/login",(req,res)=>{
+    var uname=req.query.uname
+    var upwd=req.query.upwd
+    var reguname=/^\w{1,10}$/
+    if(!reguname.test(uname)){
+        return
+    }
+    var regupwd=/^\d{6}$/
+    if(!regupwd.test(upwd)){
+        return
+    }
+    var sql="SELECT * FROM lc_user WHERE uname=? AND upwd=?"
+    pool.query(sql,[uname,upwd],(err,result)=>{
+        if(err) throw err
+        res.json(result[0].uname)
+        user={"ok":1,"uname":result[0].uname}
+    })
+
+})
+app.get("/islogin",(req,res)=>{
+    res.json(user)
+})
+app.get('/logout',function(req,res){
+    user ={'ok':0};
+    res.json({code:1,msg:'success'})
+});
+

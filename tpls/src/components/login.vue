@@ -4,14 +4,15 @@
       <div class="login">
         <p class="title">账户密码登录</p>
         <p>
-          <input type="text" placeholder="请输入账号">
-          <span></span>
+          <input type="text" placeholder="请输入账号" v-model="uname">
+
         </p>
         <p>
-          <input type="password" placeholder="请输入密码">
+          <input type="password" placeholder="请输入密码" v-model="upwd">
+          <span class="err" v-show="false">*账户名或密码错误</span>
         </p>
         <p>
-          <input type="button" value="立即登录" class="login-btn">
+          <input type="button" value="立即登录" class="login-btn" @click="login()">
         </p>
         <p>
           <a href="#">忘记密码</a>
@@ -23,7 +24,23 @@
 </template>
 <script>
   export default{
-
+    data(){
+        return {
+            uname:"",
+            upwd:""
+        }
+    },
+    methods:{
+        login(){
+          this.$http.get("http://127.0.0.1:3003/login?uname="+this.uname+"&upwd="+this.upwd).then((response)=>{
+              if(response.data){
+                this.$router.push("/index")
+              }
+              this.$parent.loginStatus()
+          }
+          )
+        }
+    }
   }
 </script>
 <style scoped>
@@ -71,5 +88,8 @@
   }
   .login .register{
     color:#ff4001
+  }
+  .err{
+    color:red;
   }
 </style>

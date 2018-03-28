@@ -4,17 +4,24 @@
       <div class="login">
         <p class="title">账户密码登录</p>
         <p>
-          <input type="text" placeholder="请输入账号">
-          <span></span>
+          <input type="text" placeholder="请输入账号" v-model="uname" @blur="valiuname()">
+          <span :class='{"detail":true,"err":showunameerr}'>10个字符以内的字母、数字或下划线的组合</span><br>
+          <span class="err" v-show="showunameerr">用户名不符合规定</span>
+          <br>
+          <span class="err" v-show="queryuname">用户名已被注册</span>
         </p>
         <p>
-          <input type="password" placeholder="请输入密码">
+          <input type="password" placeholder="请输入密码" v-model="upwd" @blur="valiupwd()">
+          <span :class='{"detail":true,"err":showupwderr}'>6位数字</span><br>
+          <span class="err" v-show="showupwderr">密码不符合规定</span>
+
         </p>
         <p>
-          <input type="password" placeholder="请再次输入密码">
+          <input type="password" placeholder="请再次输入密码" v-model="againupwd" @blur="valiagain()">
+          <span v-show="againupwderr" class="err">两次密码不一致</span>
         </p>
         <p>
-          <input type="button" value="立即注册" class="login-btn">
+          <input type="button" value="立即注册" class="login-btn" @click="register()">
         </p>
 
       </div>
@@ -23,7 +30,52 @@
 </template>
 <script>
   export default{
-
+    data(){
+        return {
+            uname:'',
+            upwd:'',
+            showunameerr:false,
+            showupwderr:false,
+            againupwd:'',
+            againupwderr:false,
+            queryuname:false
+        }
+    },
+    methods:{
+        valiuname(){
+            var reg=/^\w{1,10}$/
+            if(!reg.test(this.uname)){
+                this.showunameerr=true
+            }else{
+              this.showunameerr=false
+            }
+            this.$http.get("http://127.0.0.1:3003/valiuname?uname="+this.uname).then((response)=>{
+                if(response.data!=null){
+                  this.queryuname=true
+                }else{
+                  this.queryuname=false
+                }
+            })
+        },
+        valiupwd(){
+            var reg=/^\d{6}$/
+            if(!reg.test(this.upwd)){
+                this.showupwderr=true
+            }else{
+                this.showupwderr=false
+            }
+        },
+        valiagain(){
+          this.againupwderr=this.againupwd!==this.upwd
+        },
+        register(){
+//            if(!this.showunameerr&&!this.showupwderr&&this.againupwderr){
+            this.$http.post("http://127.0.0.1:3003/register",{uname:this.uname,upwd:this.upwd},{emulateJSON: true}).then((response)=>{
+                alert(response.data.msg)
+            })
+//            }
+        }
+    }
   }
 </script>
 <style scoped>
@@ -66,10 +118,11 @@
     background:#ff4001;
     color:#fff;
   }
-  .login .right{
-    float:right;
+
+  .detail{
+    color:green;
   }
-  .login .register{
-    color:#ff4001
+  .err{
+    color:red;
   }
 </style>

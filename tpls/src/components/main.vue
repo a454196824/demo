@@ -1,10 +1,9 @@
-
 <template>
     <div>
         <header class="header">
           <div class="container-fluid">
             <div class="row lecake-header">
-              <div class="col-sm-12 hidden-xs">
+              <div class="col-sm-12 hidden-xs large-screen">
                 <div class="row">
                   <div class="col-sm-2">
                     <router-link to="/index"><img src="../assets/img/index/logo.png"></router-link>
@@ -37,8 +36,12 @@
                       <li><router-link to="/*">利卡专区</router-link></li>
                     </ul>
                   </div>
-                  <div class="col-sm-2 text-right  login">
+                  <div class="col-sm-2 text-right  login" v-show="!isLogin">
                     <router-link to="/login">登录</router-link>/<router-link to="/register">注册</router-link>
+                  </div>
+                  <div class="col-sm-2 text-right login" v-show="isLogin">
+                    <span>欢迎{{uname}} |</span>
+                    <span><a href="javascript:;" @click="logout()">注销</a></span>
                   </div>
                   <div class="col-sm-1 cart-container">
                     <router-link to="/cart"><span class="cart"></span></router-link>
@@ -48,24 +51,19 @@
               </div>
               <div class="col-xs-12 hidden-sm hidden-md hidden-lg">
                 <div class="row">
-                  <div class="col-sm-12 text-center">
+                  <div class="col-xs-6 text-left">
                     <router-link to="/index"><img src="../assets/img/index/logo.png"></router-link>
                   </div>
-                  <div class="col-sm-12 text-center">
-                    <router-link to="/index">首页</router-link>
-                  </div>
-                  <div class="col-sm-12 text-center">
-                    <router-link to="/productlist">蛋糕</router-link>
-                  </div>
-                  <div class="col-sm-12 text-center">
-                    <router-link to="/*">礼品</router-link>
-                  </div>
-                  <div class="col-sm-12 dropdown-container text-center">
-                    <router-link to="/*">企业专区</router-link>
-
-                  </div>
-                  <div class="col-sm-12 dropdown-container text-center">
-                    <router-link to="/*">我的诺心</router-link>
+                  <div class="col-xs-6 text-right">
+                    <a href="javascript:;"><span class="glyphicon glyphicon-menu-hamburger" style="font-size:30px;color:#ff4001" @click="toggleshow()"></span>
+                    </a>
+                    <div class="downlist" v-show="isShow" >
+                      <p><router-link to="/index">首页</router-link></p>
+                      <p><router-link to="/productlist">蛋糕</router-link></p>
+                      <p><router-link to="/*">礼品</router-link></p>
+                      <p><router-link to="/*">企业专区</router-link></p>
+                      <p><router-link to="/*">我的诺心</router-link></p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -120,6 +118,9 @@
       data(){
           return {
               count:0,
+              isLogin:false,
+              uname:"",
+              isShow:false
           }
       },
       methods:{
@@ -127,10 +128,30 @@
             this.$http.get("http://127.0.0.1:3003/cart_count").then((response)=>{
               this.count=response.data[0].num
             })
-        }
+        },
+        loginStatus:function(){
+            this.$http.get('http://127.0.0.1:3003/islogin').then((response)=>{
+                if(response.data.ok==1){
+                    this.isLogin=true
+                    this.uname=response.data.uname
+                }else{
+                    this.isLogin=false
+                }
+                console.log(response.data)
+            })
+        },
+        logout:function(){
+            this.$http.get("http://127.0.0.1:3003/logout").then((response)=>{
+                this.loginStatus()
+            })
+        },
+        toggleshow:function(){
+            this.isShow=!this.isShow
+        },
       },
       created(){
           this.loadCartCount()
+          this.loginStatus()
       },
       mounted(){
           //设置主体内容的margin-top
@@ -140,8 +161,6 @@
             var height=$('.header .container-fluid').height()
             $(".v-container").css("marginTop",height)
           })
-          //设置图片懒加载
-
       }
     }
 </script>
@@ -158,9 +177,12 @@
     top:0;
     z-index:999
   }
-  .lecake-header a{
+  .lecake-header .large-screen a{
     display:inline-block;
     width:80px;
+  }
+  .lecake-header .login{
+    width:140px;
   }
   .lecake-header .login a{
     display:inline;
@@ -207,6 +229,24 @@
   }
   .dropdown-container:hover .dropdown-list li{
     display:block;
+  }
+  .downlist{
+      width:100px;
+      background:#fff;
+    position:absolute;
+    right:0;
+    top:60px;
+    text-align: center;
+    line-height:0;
+    box-shadow:3px 3px 5px 0px #ff4001
+  }
+  .downlist p{
+    height:20px;
+    line-height:20px;
+  }
+  .downlist p a{
+    padding:0;
+    margin:0;
   }
   /*页头购物车*/
   .cart-container{
@@ -274,8 +314,6 @@
     background-color:#fff;
     position:relative;
     background:url('../assets/img/icons_1.png') -200px 0px  no-repeat;
-
-
   }
   .footer .wechat-pic .erweima{
     position:absolute;

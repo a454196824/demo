@@ -8,7 +8,7 @@
       <div class="goods-list ">
         <div class="goods-item row" v-for="item in list">
           <div class="col-xs-1 col-sm-1 goods-checked" >
-            <a href="javascript:;" :class="{'check-btn':true,'checked':isChecked}" @click="toggleChecked(item.pid)"></a>
+            <a href="javascript:;" :class="{'check-btn':true,'checked':item.ischecked}" @click="toggleChecked(item.pid)"></a>
           </div>
           <div class="col-xs-4 col-sm-2 goods-img">
             <img :src="require('../assets/'+item.showpic)" alt="" class="img-responsive">
@@ -64,11 +64,11 @@
     <div class="fix-bottom container-fluid">
       <div class="row">
         <div class="col-xs-offset-2 col-xs-3 ">
-          <a href="javascript:;" class="check-btn checked-all"></a>
-          <span class="check-text">全选 | 共{{count}}件商品，已选择1件</span>
+          <a href="javascript:;" :class='{"check-btn":true, "checked-all":true,"checked":checkedAll}' @click="toggleCheckAll()"></a>
+          <span class="check-text">全选 | 共{{count}}件商品，已选择{{checkedcount}}件</span>
         </div>
         <div class="col-xs-offset-1 col-xs-2">
-          <span>合计（不含运费）: <b class="price">¥78.00</b></span>
+          <span>合计（不含运费）: <b class="price">¥{{totalprice}}.00</b></span>
         </div>
         <div class="col-xs-3">
           <button class="order-btn">结算</button>
@@ -83,7 +83,9 @@
       return {
           count:0,
           list:[],
-          isChecked:false,
+          checkedAll:false,
+          checkedcount:0,
+          totalprice:0,
       }
     },
     methods:{
@@ -95,7 +97,6 @@
         loadCart(){
             this.$http.get("http://127.0.0.1:3003/loadCart").then((response)=>{
                 this.list=response.data
-                console.log(this.list)
             })
         },
         addCake(pid){
@@ -115,12 +116,36 @@
         toggleChecked(pid){
           this.isChecked=!this.isChecked
           var ischecked=this.isChecked?1:0
-          this.$http.get("http://127.0.0.1:3003/is_checked?pid="+pid+"&ischecked="+ischecked)
+          this.$http.get("http://127.0.0.1:3003/is_checked?pid="+pid).then((response)=>{
+            this.loadCart()
+            this.getCheckMsg()
+          })
+        },
+        toggleCheckAll(){
+          this.checkedAll=!this.checkedAll
+          var bool=this.checkedAll?1:0
+          this.$http.get("http://127.0.0.1:3003/checked_all?checkedAll="+bool).then((response)=>{
+              this.loadCart()
+              this.getCheckMsg()
+          })
+        },
+        getCheckMsg(){
+            this.$http.get("http://127.0.0.1:3003/checked_msg").then((response)=>{
+              this.checkedcount=response.data[0].c
+              if(!this.checkedcount){
+                  this.checkedcount=0
+              }
+              this.totalprice=response.data[0].s
+              if(!this.totalprice){
+                  this.totalprice=0
+              }
+            })
         }
     },
     created(){
         this.getCount()
         this.loadCart()
+        this.getCheckMsg()
     },
     mounted(){
 

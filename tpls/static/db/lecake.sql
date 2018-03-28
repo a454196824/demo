@@ -10,8 +10,7 @@ USE lecake;
 CREATE TABLE lc_user(
 	uid INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
 	uname VARCHAR(32),
-	upwd VARCHAR(32),
-	phone VARCHAR(32)
+	upwd VARCHAR(32)
 );
 #创建产品信息表
 CREATE TABLE lc_product(
@@ -380,5 +379,5 @@ CREATE TABLE lc_cart(
     price    VARCHAR(32),
     showpic  VARCHAR(64),
     pcount   INT NOT NULL DEFAULT 1,
-    ischecked INT NOT NULL DEFAULT 0
+    ischecked BOOLEAN NOT NULL DEFAULT false
 );

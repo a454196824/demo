@@ -16,6 +16,10 @@ Vue.use(VueResource);//支持VueResource这个插件
 
 Vue.config.productionTip = false
 
+import VueLazyload from 'vue-lazyload'
+Vue.use(VueLazyload)//支持图片懒加载
+
+
 /* eslint-disable no-new */
 new Vue({
   el: '#app',

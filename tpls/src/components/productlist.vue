@@ -63,7 +63,7 @@
               <div class="img-wrap">
                 <router-link :to="'/productDetail/'+product.pid">
 
-                  <img :src="require('../assets/'+product.showpic)" alt="" class="lazy">
+                  <img v-lazy="require('../assets/'+product.showpic)" alt="" class="lazy">
                 </router-link>
 
               </div>
